@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./source/server.js",
-    "dev": "nodemon ./source/server.js"
+    "dev": "nodemon ./source/server.js",
+    "migrate": "knex migrate:latest"
   },
   "author": "Daniel Rodrigues",
   "license": "ISC",
