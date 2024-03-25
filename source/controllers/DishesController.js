@@ -50,6 +50,54 @@ class DishesController {
 
     return response.status(201).json();
   }
+  async update(request, response) {
+    const { title, description, category, price, ingredients, image } =
+      request.body;
+    const { id } = request.params;
+
+    const imageFileName = request.file.filename;
+
+    const diskStorage = new DiskStorage();
+
+    const dish = await knex("dishes").where({ id }).first();
+
+    if (dish.image) {
+      await diskStorage.deleteFile(dish.image);
+    }
+
+    const filename = await diskStorage.saveFile(imageFileName);
+
+    dish.image = image ?? filename;
+    dish.title = title ?? dish.title;
+    dish.description = description ?? dish.description;
+    dish.category = category ?? dish.category;
+    dish.price = price ?? dish.price;
+
+    await knex("dishes").where({ id }).update(dish);
+
+    const hasOnlyOneIngredient = typeof ingredients === "string";
+
+    let ingredientsInsert;
+
+    if (hasOnlyOneIngredient) {
+      ingredientsInsert = {
+        name: ingredients,
+        dish_id: dish.id,
+      };
+    } else if (ingredients.length > 1) {
+      ingredientsInsert = ingredients.map((ingredient) => {
+        return {
+          dish_id: dish.id,
+          name: ingredient,
+        };
+      });
+    }
+
+    await knex("ingredients").where({ dish_id: id }).delete();
+    await knex("ingredients").where({ dish_id: id }).insert(ingredientsInsert);
+
+    return response.status(201).json("Prato atualizado com sucesso");
+  }
 
   async show(request, response) {
     const { id } = request.params;
